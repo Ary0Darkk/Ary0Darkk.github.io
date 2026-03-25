@@ -1,1 +1,1 @@
-Hello, My name is Aryan Chaudhary. How can I help you all?
+This is my personal website built using github pages.
