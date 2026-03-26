@@ -1,19 +1,39 @@
 const pages = [
-    { route: "index", file: "_posts/index.md" },
-    { route: "blog", file: "_posts/blog.md" },
-    { route: "about", file: "_posts/about.md" }
-];
-
-const manifest = [
-    { slug: "attention-in-transformers", title: "Understanding Attention in Transformers", date: "March 27, 2026", description: "A deep dive into the attention mechanism that powers modern language models." },
-    { slug: "hello-world", title: "Hello World", date: "March 26, 2026", description: "My first blog post on this new site." }
+    { route: "index", file: "content/index.md" },
+    { route: "blog", file: "content/blog.md" },
+    { route: "about", file: "content/about.md" }
 ];
 
 const pageToFile = {
-    'index': '_posts/index.md',
-    'blog': '_posts/blog.md',
-    'about': '_posts/about.md'
+    'index': 'content/index.md',
+    'blog': 'content/blog.md',
+    'about': 'content/about.md'
 };
+
+const posts = {
+    'attention-in-transformers': {
+        title: 'Understanding Attention in Transformers',
+        date: 'March 27, 2026',
+        description: 'A deep dive into the attention mechanism that powers modern language models.',
+        file: 'content/attention-in-transformers.md'
+    },
+    'hello-world': {
+        title: 'Hello World',
+        date: 'March 26, 2026',
+        description: 'My first blog post on this new site.',
+        file: 'content/hello-world.md'
+    }
+};
+
+function renderPostList() {
+    return Object.entries(posts).map(([slug, post]) => `
+        <li class="post-item">
+            <a href="post.html?post=${slug}" class="post-title">${post.title}</a>
+            <span class="post-meta">${post.date}</span>
+            <p class="post-excerpt">${post.description}</p>
+        </li>
+    `).join('');
+}
 
 function init() {
     const params = new URLSearchParams(window.location.search);
@@ -61,13 +81,19 @@ async function loadPage(page) {
         renderMath();
         Prism.highlightAll();
     } catch (e) {
-        document.getElementById('content').innerHTML = '<p>Error loading page. Note: This requires a local server (not file://). Try: npx serve or python -m http.server</p>';
+        document.getElementById('content').innerHTML = '<p>Error loading page. Check console for details.</p>';
     }
 }
 
 async function loadPost(slug) {
+    const post = posts[slug];
+    if (!post) {
+        document.getElementById('content').innerHTML = '<p>Post not found.</p>';
+        return;
+    }
+
     try {
-        const response = await fetch(`_posts/${slug}.md`);
+        const response = await fetch(post.file);
         const markdown = await response.text();
         const { data, content } = parseFrontmatter(markdown);
         const mathBlocks = protectMath(content);
@@ -78,7 +104,7 @@ async function loadPost(slug) {
 
         html = `<article>
             <header class="post-header">
-                <h1>${data.title || slug}</h1>
+                <h1>${data.title || post.title}</h1>
                 ${data.date ? `<span class="post-meta">${data.date}</span>` : ''}
             </header>
             <div class="post-content">${html}</div>
@@ -90,16 +116,6 @@ async function loadPost(slug) {
     } catch (e) {
         document.getElementById('content').innerHTML = '<p>Error loading post.</p>';
     }
-}
-
-function renderPostList() {
-    return manifest.map(post => `
-        <li class="post-item">
-            <a href="post.html?post=${post.slug}" class="post-title">${post.title}</a>
-            <span class="post-meta">${post.date}</span>
-            <p class="post-excerpt">${post.description}</p>
-        </li>
-    `).join('');
 }
 
 function parseFrontmatter(text) {
